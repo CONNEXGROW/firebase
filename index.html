@@ -3,22 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConnexWebinar</title>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage.js"></script>
-</head>
-<body>
-    <h1>Welcome to ConnexWebinar</h1>
-    <button id="googleSignIn">Sign in with Google</button>
-
-    <input type="file" id="fileInput" />
-    <button id="uploadFile">Upload File</button>
-
-    <button id="listFiles">List My Files</button>
-    <div id="fileList"></div>
-
+    <title>ConnexWebinar Sign In</title>
     <script type="module">
+        // Import the necessary functions from Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA-e4hO_m_AoHPxDz8T3maBU41njDqABWY",
@@ -32,56 +22,48 @@
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const storage = firebase.storage();
-        const provider = new firebase.auth.GoogleAuthProvider();
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
 
-        // Google Sign-In
-        document.getElementById("googleSignIn").onclick = function() {
-            auth.signInWithPopup(provider).then((result) => {
-                const user = result.user;
-                console.log("User signed in:", user);
-            }).catch((error) => {
-                console.error("Error signing in:", error);
-            });
-        };
-
-        // Upload File
-        document.getElementById("uploadFile").onclick = function() {
-            const file = document.getElementById("fileInput").files[0];
-            const userId = auth.currentUser.uid; // Get logged-in user's ID
-            const storageRef = storage.ref(`userFiles/${userId}/${file.name}`);
-
-            storageRef.put(file).then(() => {
-                console.log("File uploaded successfully!");
-            }).catch((error) => {
-                console.error("Error uploading file:", error);
-            });
-        };
-
-        // List User Files
-        document.getElementById("listFiles").onclick = function() {
-            const userId = auth.currentUser.uid;
-            const storageRef = storage.ref(`userFiles/${userId}`);
-
-            storageRef.listAll().then((result) => {
-                const fileList = document.getElementById("fileList");
-                fileList.innerHTML = ""; // Clear previous list
-
-                result.items.forEach((fileRef) => {
-                    fileRef.getDownloadURL().then((url) => {
-                        const link = document.createElement("a");
-                        link.href = url;
-                        link.textContent = fileRef.name;
-                        link.target = "_blank"; // Open link in new tab
-                        fileList.appendChild(link);
-                        fileList.appendChild(document.createElement("br"));
-                    });
+        // Function to handle Google Sign-In
+        window.signInWithGoogle = () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    // User signed in successfully
+                    const user = result.user;
+                    console.log("User Info: ", user);
+                    alert(`Welcome, ${user.displayName}!`);
+                })
+                .catch((error) => {
+                    console.error("Error during sign in: ", error);
+                    alert(`Sign-in failed: ${error.message}`);
                 });
-            }).catch((error) => {
-                console.error("Error listing files:", error);
-            });
         };
     </script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #357ae8;
+        }
+    </style>
+</head>
+<body>
+    <button id="googleSignInBtn" onclick="signInWithGoogle()">Sign in with Google</button>
 </body>
 </html>
