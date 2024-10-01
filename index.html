@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnexWebinar</title>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.10.0/firebase-storage.js"></script>
+</head>
+<body>
+    <h1>Welcome to ConnexWebinar</h1>
+    <button id="googleSignIn">Sign in with Google</button>
+
+    <input type="file" id="fileInput" />
+    <button id="uploadFile">Upload File</button>
+
+    <button id="listFiles">List My Files</button>
+    <div id="fileList"></div>
+
+    <script type="module">
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-e4hO_m_AoHPxDz8T3maBU41njDqABWY",
+            authDomain: "connexwebinar.firebaseapp.com",
+            projectId: "connexwebinar",
+            storageBucket: "connexwebinar.appspot.com",
+            messagingSenderId: "1027089564725",
+            appId: "1:1027089564725:web:8801537b5cc837d8c35d7c",
+            measurementId: "G-NQ6HM4YT2H"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // Google Sign-In
+        document.getElementById("googleSignIn").onclick = function() {
+            auth.signInWithPopup(provider).then((result) => {
+                const user = result.user;
+                console.log("User signed in:", user);
+            }).catch((error) => {
+                console.error("Error signing in:", error);
+            });
+        };
+
+        // Upload File
+        document.getElementById("uploadFile").onclick = function() {
+            const file = document.getElementById("fileInput").files[0];
+            const userId = auth.currentUser.uid; // Get logged-in user's ID
+            const storageRef = storage.ref(`userFiles/${userId}/${file.name}`);
+
+            storageRef.put(file).then(() => {
+                console.log("File uploaded successfully!");
+            }).catch((error) => {
+                console.error("Error uploading file:", error);
+            });
+        };
+
+        // List User Files
+        document.getElementById("listFiles").onclick = function() {
+            const userId = auth.currentUser.uid;
+            const storageRef = storage.ref(`userFiles/${userId}`);
+
+            storageRef.listAll().then((result) => {
+                const fileList = document.getElementById("fileList");
+                fileList.innerHTML = ""; // Clear previous list
+
+                result.items.forEach((fileRef) => {
+                    fileRef.getDownloadURL().then((url) => {
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.textContent = fileRef.name;
+                        link.target = "_blank"; // Open link in new tab
+                        fileList.appendChild(link);
+                        fileList.appendChild(document.createElement("br"));
+                    });
+                });
+            }).catch((error) => {
+                console.error("Error listing files:", error);
+            });
+        };
+    </script>
+</body>
+</html>
