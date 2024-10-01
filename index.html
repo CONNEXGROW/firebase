@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connex Webinar</title>
-    <script src="https://www.gstatic.com/firebasejs/9.8.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.8.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.8.0/firebase-storage.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.8.0/firebase-analytics.js"></script>
-</head>
-<body>
-    <button id="login-button">Sign in with Google</button>
-    <ul id="file-list"></ul>
+    <title>ConnexWebinar File Access</title>
+    <script type="module">
+        // Import the necessary functions from Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
-    <script>
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA-e4hO_m_AoHPxDz8T3maBU41njDqABWY",
@@ -26,43 +22,47 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const storage = firebase.storage();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const storage = getStorage(app);
+        const fileList = document.getElementById("fileList");
 
-        document.getElementById("login-button").onclick = function () {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).then((result) => {
-                const user = result.user;
-                loadFiles(user.email);
-            }).catch((error) => {
-                console.error("Sign-in failed: ", error);
-            });
+        // Function to handle Google Sign-In
+        window.signInWithGoogle = () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    console.log("User Info: ", user);
+                    alert(`Welcome, ${user.displayName}!`);
+                    loadFiles(user.email); // Load files for the signed-in user
+                })
+                .catch((error) => {
+                    console.error("Error during sign in: ", error);
+                    alert(`Sign-in failed: ${error.message}`);
+                });
         };
 
+        // Function to load files accessible to the user
         function loadFiles(email) {
-            const fileLinks = {
+            // Replace this with your logic to determine accessible files
+            const authorizedFiles = {
                 "amanmandalbahi@gmail.com": [
                     "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/IMG_20230217_083212.jpg?alt=media&token=53aecd6f-fdb5-4f2b-89c0-28b0444acc9a"
                 ],
-                "example1@gmail.com": [
-                    "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile1.pdf?alt=media&token=token1",
-                    "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile2.pdf?alt=media&token=token2",
-                ],
+                // Add more authorized emails and their file URLs as needed
                 "example2@gmail.com": [
                     "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
                 ],
             };
 
-            if (fileLinks[email]) {
+            if (authorizedFiles[email]) {
                 // Automatically open the first file link
-                const firstFileUrl = fileLinks[email][0];
+                const firstFileUrl = authorizedFiles[email][0];
                 window.open(firstFileUrl, "_blank");
 
                 // Optionally, display the file links
-                const fileList = document.getElementById("file-list");
-                fileList.innerHTML = ""; // Clear existing links
-                fileLinks[email].forEach((fileUrl) => {
+                authorizedFiles[email].forEach((fileUrl) => {
                     const listItem = document.createElement("li");
                     listItem.innerHTML = `<a href="${fileUrl}" target="_blank">${fileUrl.split('/').pop()}</a>`;
                     fileList.appendChild(listItem);
@@ -71,6 +71,44 @@
                 alert("You do not have access to any files.");
             }
         }
+
+        // Check authentication state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loadFiles(user.email); // Load files if user is already signed in
+            }
+        });
     </script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #357ae8;
+        }
+        ul {
+            list-style-type: none;
+        }
+    </style>
+</head>
+<body>
+    <button id="googleSignInBtn" onclick="signInWithGoogle()">Sign in with Google</button>
+    <h2>Accessible Files:</h2>
+    <ul id="fileList"></ul>
 </body>
 </html>
