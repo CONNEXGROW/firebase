@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConnexWebinar Sign In</title>
+    <title>ConnexWebinar File Access</title>
     <script type="module">
         // Import the necessary functions from Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -24,26 +25,60 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
+        const storage = getStorage(app);
+        const fileList = document.getElementById("fileList");
 
         // Function to handle Google Sign-In
         window.signInWithGoogle = () => {
             signInWithPopup(auth, provider)
                 .then((result) => {
-                    // User signed in successfully
                     const user = result.user;
                     console.log("User Info: ", user);
                     alert(`Welcome, ${user.displayName}!`);
+                    loadFiles(user.email); // Load files for the signed-in user
                 })
                 .catch((error) => {
                     console.error("Error during sign in: ", error);
                     alert(`Sign-in failed: ${error.message}`);
                 });
         };
+
+        // Function to load files accessible to the user
+        function loadFiles(email) {
+            // Replace this with your logic to determine accessible files
+            const authorizedEmails = ["example1@gmail.com", "example2@gmail.com"]; // Add email addresses here
+
+            if (authorizedEmails.includes(email)) {
+                const storageRef = ref(storage, "your-folder/"); // Change "your-folder" to your storage path
+                listAll(storageRef)
+                    .then((res) => {
+                        res.items.forEach((itemRef) => {
+                            getDownloadURL(itemRef).then((url) => {
+                                const listItem = document.createElement("li");
+                                listItem.innerHTML = `<a href="${url}" target="_blank">${itemRef.name}</a>`;
+                                fileList.appendChild(listItem);
+                            });
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("Error loading files: ", error);
+                    });
+            } else {
+                alert("You do not have access to any files.");
+            }
+        }
+
+        // Check authentication state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loadFiles(user.email); // Load files if user is already signed in
+            }
+        });
     </script>
     <style>
         body {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             height: 100vh;
             background-color: #f0f0f0;
@@ -57,13 +92,19 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-bottom: 20px;
         }
         button:hover {
             background-color: #357ae8;
+        }
+        ul {
+            list-style-type: none;
         }
     </style>
 </head>
 <body>
     <button id="googleSignInBtn" onclick="signInWithGoogle()">Sign in with Google</button>
+    <h2>Accessible Files:</h2>
+    <ul id="fileList"></ul>
 </body>
 </html>
