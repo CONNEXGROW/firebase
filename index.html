@@ -45,33 +45,33 @@
 
         // Function to load files accessible to the user
         function loadFiles(email) {
-            // Mapping of authorized emails to their accessible file URLs
-            const authorizedFiles = {
-                "amanpandey2005216@gmail.com": [
-                    {
-                        name: "IMG_20230217_083212.jpg",
-                        url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/IMG_20230217_083212.jpg?alt=media&token=53aecd6f-fdb5-4f2b-89c0-28b0444acc9a"
-                    }
-                ],
-                // Add more authorized emails and their file URLs as needed
-                "example2@gmail.com": [
-                    {
-                        name: "Example File 3",
-                        url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
-                    },
-                ],
-            };
+            // Mapping of files to authorized emails
+            const authorizedFiles = [
+                {
+                    name: "IMG_20230217_083212.jpg",
+                    url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/IMG_20230217_083212.jpg?alt=media&token=53aecd6f-fdb5-4f2b-89c0-28b0444acc9a",
+                    authorizedEmails: ["amanmandalbahi@gmail.com", "user1@example.com", "user2@example.com"] // Add more emails here
+                },
+                {
+                    name: "Example File 3",
+                    url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
+                    authorizedEmails: ["example2@gmail.com", "user3@example.com"] // Add more emails here
+                },
+                // Add more files as needed
+            ];
 
-            if (authorizedFiles[email]) {
+            // Find accessible files for the user
+            const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
+
+            if (accessibleFiles.length > 0) {
                 // Automatically open the first file link
-                const firstFile = authorizedFiles[email][0];
-                window.open(firstFile.url, "_blank");
+                window.open(accessibleFiles[0].url, "_blank");
 
                 // Clear previous file list
                 fileList.innerHTML = '';
 
                 // Display the file links
-                authorizedFiles[email].forEach((file) => {
+                accessibleFiles.forEach((file) => {
                     const listItem = document.createElement("li");
                     listItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
                     fileList.appendChild(listItem);
