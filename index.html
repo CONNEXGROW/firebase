@@ -49,7 +49,7 @@
             const authorizedEmails = ["amanmandalbahi@gmail.com", "example2@gmail.com"]; // Add email addresses here
 
             if (authorizedEmails.includes(email)) {
-                const storageRef = ref(storage, "your-folder/"); // Change "your-folder" to your storage path
+                const storageRef = ref(storage, "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/IMG_20230217_083212.jpg?alt=media&token=53aecd6f-fdb5-4f2b-89c0-28b0444acc9a"); // Change "your-folder" to your storage path
                 listAll(storageRef)
                     .then((res) => {
                         res.items.forEach((itemRef) => {
