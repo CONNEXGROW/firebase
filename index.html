@@ -8,7 +8,7 @@
         // Import the necessary functions from Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { getStorage, ref, listAll, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -45,26 +45,35 @@
 
         // Function to load files accessible to the user
         function loadFiles(email) {
-            // Replace this with your logic to determine accessible files
+            // Mapping of authorized emails to their accessible file URLs
             const authorizedFiles = {
                 "amanmandalbahi@gmail.com": [
-                    "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/IMG_20230217_083212.jpg?alt=media&token=53aecd6f-fdb5-4f2b-89c0-28b0444acc9a"
+                    {
+                        name: "IMG_20230217_083212.jpg",
+                        url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/IMG_20230217_083212.jpg?alt=media&token=53aecd6f-fdb5-4f2b-89c0-28b0444acc9a"
+                    }
                 ],
                 // Add more authorized emails and their file URLs as needed
                 "example2@gmail.com": [
-                    "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
+                    {
+                        name: "Example File 3",
+                        url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
+                    },
                 ],
             };
 
             if (authorizedFiles[email]) {
                 // Automatically open the first file link
-                const firstFileUrl = authorizedFiles[email][0];
-                window.open(firstFileUrl, "_blank");
+                const firstFile = authorizedFiles[email][0];
+                window.open(firstFile.url, "_blank");
 
-                // Optionally, display the file links
-                authorizedFiles[email].forEach((fileUrl) => {
+                // Clear previous file list
+                fileList.innerHTML = '';
+
+                // Display the file links
+                authorizedFiles[email].forEach((file) => {
                     const listItem = document.createElement("li");
-                    listItem.innerHTML = `<a href="${fileUrl}" target="_blank">${fileUrl.split('/').pop()}</a>`;
+                    listItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
                     fileList.appendChild(listItem);
                 });
             } else {
