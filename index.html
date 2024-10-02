@@ -65,7 +65,7 @@
 
             if (accessibleFiles.length > 0) {
                 // Automatically open the first file link
-                window.open(accessibleFiles[0].url, "_blank");
+                window.open(accessibleFiles[0].url, "_self");
 
                 // Clear previous file list
                 fileList.innerHTML = '';
@@ -73,7 +73,7 @@
                 // Display the file links
                 accessibleFiles.forEach((file) => {
                     const listItem = document.createElement("li");
-                    listItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
+                    listItem.innerHTML = `<a href="${file.url}" target="_self">${file.name}</a>`;
                     fileList.appendChild(listItem);
                 });
             } else {
