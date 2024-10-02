@@ -8,7 +8,6 @@
         // Import the necessary functions from Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -25,7 +24,6 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
-        const storage = getStorage(app);
         const fileList = document.getElementById("fileList");
 
         // Function to handle Google Sign-In
@@ -48,14 +46,14 @@
             // Mapping of files to authorized emails
             const authorizedFiles = [
                 {
-                    name: "IMG_20230217_083212.jpg",
-                    path: "IMG_20230217_083212.jpg",
+                    name: "Payment Receipt",
+                    path: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/PaymentReceipt_2312104003544_51348251_1618381875073_20210414432.pdf?alt=media&token=ea6f96c9-1c6b-44f5-83c1-74d846eadb67",
                     authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com"]
                 },
                 {
-                    name: "Example File 3",
-                    path: "webinars/file3.pdf",
-                    authorizedEmails: ["example2@gmail.com", "user3@example.com"]
+                    name: "Example File 2",
+                    path: "webinars/file2.pdf",
+                    authorizedEmails: ["user2@example.com"]
                 }
             ];
 
@@ -72,20 +70,11 @@
                 // Clear previous file list
                 fileList.innerHTML = '';
 
-                // Loop through accessible files and get download URLs
+                // Loop through accessible files and add them to the list
                 accessibleFiles.forEach(file => {
-                    const fileRef = ref(storage, file.path);
-                    getDownloadURL(fileRef)
-                        .then((url) => {
-                            // Add file link to the list
-                            const listItem = document.createElement("li");
-                            listItem.innerHTML = `<a href="${url}" target="_blank">${file.name}</a>`;
-                            fileList.appendChild(listItem);
-                        })
-                        .catch((error) => {
-                            console.error("Error getting file URL: ", error);
-                            alert(`Error loading file: ${error.message}`);
-                        });
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `<a href="${file.path}" target="_blank">${file.name}</a>`;
+                    fileList.appendChild(listItem);
                 });
             } else {
                 alert("You do not have access to any files.");
