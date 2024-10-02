@@ -25,6 +25,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
+        const storage = getStorage(app);
         const fileList = document.getElementById("fileList");
 
         // Function to handle Google Sign-In
@@ -52,9 +53,9 @@
                     authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "user2@example.com"] // Add more emails here
                 },
                 {
-                    name: "Payment Receipt",
-                    url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/PaymentReceipt_2312104003544_51348251_1618381875073_20210414432.pdf?alt=media&token=ea6f96c9-1c6b-44f5-83c1-74d846eadb67",
-                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "user2@example.com"] // Add more emails here
+                    name: "Example File 3",
+                    url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
+                    authorizedEmails: ["example2@gmail.com", "user3@example.com"] // Add more emails here
                 },
                 // Add more files as needed
             ];
@@ -63,6 +64,9 @@
             const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
 
             if (accessibleFiles.length > 0) {
+                // Automatically open the first file link
+                window.open(accessibleFiles[0].url, "_blank");
+
                 // Clear previous file list
                 fileList.innerHTML = '';
 
