@@ -48,8 +48,8 @@
             // Mapping of files to authorized emails
             const authorizedFiles = [
                 {
-                    name: "yio.jpg",
-                    path: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/PaymentReceipt_2312104003544_51348251_1618381875073_20210414432.pdf?alt=media&token=ea6f96c9-1c6b-44f5-83c1-74d846eadb67",
+                    name: "IMG_20230217_083212.jpg",
+                    path: "IMG_20230217_083212.jpg",
                     authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com"]
                 },
                 {
@@ -59,30 +59,32 @@
                 }
             ];
 
+            console.log("User email: ", email); // Verify the email being processed
+
             // Find accessible files for the user
-            const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
+            const accessibleFiles = authorizedFiles.filter(file => {
+                const isAuthorized = file.authorizedEmails.includes(email);
+                console.log(`Checking access for ${file.name} with email ${email}: ${isAuthorized}`);
+                return isAuthorized;
+            });
 
             if (accessibleFiles.length > 0) {
                 // Clear previous file list
                 fileList.innerHTML = '';
 
-                // Loop through accessible files
+                // Loop through accessible files and get download URLs
                 accessibleFiles.forEach(file => {
                     const fileRef = ref(storage, file.path);
                     getDownloadURL(fileRef)
                         .then((url) => {
+                            // Add file link to the list
                             const listItem = document.createElement("li");
                             listItem.innerHTML = `<a href="${url}" target="_blank">${file.name}</a>`;
                             fileList.appendChild(listItem);
-
-                            // Optionally open the first file automatically
-                            if (fileList.childElementCount === 1) {
-                                window.open(url, "_blank");
-                            }
                         })
-                        .catch(error => {
+                        .catch((error) => {
                             console.error("Error getting file URL: ", error);
-                            alert("You do not have access to this file.");
+                            alert(`Error loading file: ${error.message}`);
                         });
                 });
             } else {
@@ -121,10 +123,6 @@
         }
         ul {
             list-style-type: none;
-            padding: 0;
-        }
-        ul li {
-            margin: 5px 0;
         }
     </style>
 </head>
