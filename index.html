@@ -8,7 +8,7 @@
         // Import the necessary functions from Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { getStorage } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
+        import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -48,33 +48,42 @@
             // Mapping of files to authorized emails
             const authorizedFiles = [
                 {
-                    name: "IMG_20230217_083212.jpg",
-                    url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/IMG_20230217_083212.jpg?alt=media&token=53aecd6f-fdb5-4f2b-89c0-28b0444acc9a",
-                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "user2@example.com"] // Add more emails here
+                    name: "yio.jpg",
+                    path: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/PaymentReceipt_2312104003544_51348251_1618381875073_20210414432.pdf?alt=media&token=ea6f96c9-1c6b-44f5-83c1-74d846eadb67",
+                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com"]
                 },
                 {
                     name: "Example File 3",
-                    url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
-                    authorizedEmails: ["example2@gmail.com", "user3@example.com"] // Add more emails here
-                },
-                // Add more files as needed
+                    path: "webinars/file3.pdf",
+                    authorizedEmails: ["example2@gmail.com", "user3@example.com"]
+                }
             ];
 
             // Find accessible files for the user
             const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
 
             if (accessibleFiles.length > 0) {
-                // Automatically open the first file link
-                window.open(accessibleFiles[0].url, "_blank");
-
                 // Clear previous file list
                 fileList.innerHTML = '';
 
-                // Display the file links
-                accessibleFiles.forEach((file) => {
-                    const listItem = document.createElement("li");
-                    listItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
-                    fileList.appendChild(listItem);
+                // Loop through accessible files
+                accessibleFiles.forEach(file => {
+                    const fileRef = ref(storage, file.path);
+                    getDownloadURL(fileRef)
+                        .then((url) => {
+                            const listItem = document.createElement("li");
+                            listItem.innerHTML = `<a href="${url}" target="_blank">${file.name}</a>`;
+                            fileList.appendChild(listItem);
+
+                            // Optionally open the first file automatically
+                            if (fileList.childElementCount === 1) {
+                                window.open(url, "_blank");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error getting file URL: ", error);
+                            alert("You do not have access to this file.");
+                        });
                 });
             } else {
                 alert("You do not have access to any files.");
@@ -112,6 +121,10 @@
         }
         ul {
             list-style-type: none;
+            padding: 0;
+        }
+        ul li {
+            margin: 5px 0;
         }
     </style>
 </head>
