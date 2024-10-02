@@ -1,123 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConnexWebinar File Access</title>
-    <script type="module">
-        // Import the necessary functions from Firebase SDK
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+// Function to load files accessible to the user
+function loadFiles(email) {
+    // Mapping of files to authorized emails
+    const authorizedFiles = [
+        {
+            name: "IMG_20230217_083212.jpg",
+            url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/IMG_20230217_083212.jpg?alt=media&token=53aecd6f-fdb5-4f2b-89c0-28b0444acc9a",
+            authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "user2@example.com"] // Add more emails here
+        },
+        {
+            name: "Payment Receipt",
+            url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/PaymentReceipt_2312104003544_51348251_1618381875073_20210414432.pdf?alt=media&token=ea6f96c9-1c6b-44f5-83c1-74d846eadb67",
+            authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "user2@example.com"] // Add more emails here
+        },
+        // Add more files as needed
+    ];
 
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyA-e4hO_m_AoHPxDz8T3maBU41njDqABWY",
-            authDomain: "connexwebinar.firebaseapp.com",
-            projectId: "connexwebinar",
-            storageBucket: "connexwebinar.appspot.com",
-            messagingSenderId: "1027089564725",
-            appId: "1:1027089564725:web:8801537b5cc837d8c35d7c",
-            measurementId: "G-NQ6HM4YT2H"
-        };
+    // Find accessible files for the user
+    const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
 
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-        const fileList = document.getElementById("fileList");
+    if (accessibleFiles.length > 0) {
+        // Automatically open the first file link in Google Docs viewer
+        window.open(`https://docs.google.com/gview?url=${encodeURIComponent(accessibleFiles[0].url)}&embedded=true`, "_blank");
 
-        // Function to handle Google Sign-In
-        window.signInWithGoogle = () => {
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    const user = result.user;
-                    console.log("User Info: ", user);
-                    alert(`Welcome, ${user.displayName}!`);
-                    loadFiles(user.email); // Load files for the signed-in user
-                })
-                .catch((error) => {
-                    console.error("Error during sign in: ", error);
-                    alert(`Sign-in failed: ${error.message}`);
-                });
-        };
+        // Clear previous file list
+        fileList.innerHTML = '';
 
-        // Function to load files accessible to the user
-        function loadFiles(email) {
-            // Mapping of files to authorized emails
-            const authorizedFiles = [
-                {
-                    name: "Payment Receipt",
-                    path: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/PaymentReceipt_2312104003544_51348251_1618381875073_20210414432.pdf?alt=media&token=ea6f96c9-1c6b-44f5-83c1-74d846eadb67",
-                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com"]
-                },
-                {
-                    name: "Example File 2",
-                    path: "webinars/file2.pdf",
-                    authorizedEmails: ["user2@example.com"]
-                }
-            ];
-
-            console.log("User email: ", email); // Verify the email being processed
-
-            // Find accessible files for the user
-            const accessibleFiles = authorizedFiles.filter(file => {
-                const isAuthorized = file.authorizedEmails.includes(email);
-                console.log(`Checking access for ${file.name} with email ${email}: ${isAuthorized}`);
-                return isAuthorized;
-            });
-
-            if (accessibleFiles.length > 0) {
-                // Clear previous file list
-                fileList.innerHTML = '';
-
-                // Loop through accessible files and add them to the list
-                accessibleFiles.forEach(file => {
-                    const listItem = document.createElement("li");
-                    listItem.innerHTML = `<a href="${file.path}" target="_blank">${file.name}</a>`;
-                    fileList.appendChild(listItem);
-                });
-            } else {
-                alert("You do not have access to any files.");
-            }
-        }
-
-        // Check authentication state
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loadFiles(user.email); // Load files if user is already signed in
-            }
+        // Display the file links
+        accessibleFiles.forEach((file) => {
+            const listItem = document.createElement("li");
+            listItem.innerHTML = `<a href="https://docs.google.com/gview?url=${encodeURIComponent(file.url)}&embedded=true" target="_blank">${file.name}</a>`;
+            fileList.appendChild(listItem);
         });
-    </script>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #4285F4;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-        button:hover {
-            background-color: #357ae8;
-        }
-        ul {
-            list-style-type: none;
-        }
-    </style>
-</head>
-<body>
-    <button id="googleSignInBtn" onclick="signInWithGoogle()">Sign in with Google</button>
-    <h2>Accessible Files:</h2>
-    <ul id="fileList"></ul>
-</body>
-</html>
+    } else {
+        alert("You do not have access to any files.");
+    }
+}
