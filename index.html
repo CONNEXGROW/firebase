@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConnexWebinar File Access</title>
+    <title>ConnexWebinar Passwordless Sign-in</title>
     <script type="module">
         // Import Firebase SDK components
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
-        // Your web app's Firebase configuration
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA-e4hO_m_AoHPxDz8T3maBU41njDqABWY",
             authDomain: "connexwebinar.firebaseapp.com",
@@ -24,26 +24,57 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const storage = getStorage(app);
         const fileList = document.getElementById("fileList");
 
-        // Function to handle email sign-in
-        window.signInWithEmail = () => {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
+        // Action code settings (URL to redirect to after email sign-in)
+        const actionCodeSettings = {
+            url: 'http://localhost:3000', // Replace this with your actual redirect URL
+            handleCodeInApp: true
+        };
 
-            signInWithEmailAndPassword(auth, email, password)
-                .then((result) => {
-                    const user = result.user;
-                    console.log("User Info: ", user);
-                    alert(`Welcome, ${user.email}!`);
-                    loadFiles(user.email); // Load files for the signed-in user
+        // Function to send sign-in link to email
+        window.sendSignInLink = () => {
+            const email = document.getElementById("email").value;
+            if (!email) {
+                alert("Please enter your email.");
+                return;
+            }
+
+            // Send the sign-in link to the user's email
+            sendSignInLinkToEmail(auth, email, actionCodeSettings)
+                .then(() => {
+                    // Save the user's email locally for further use
+                    window.localStorage.setItem('emailForSignIn', email);
+                    alert(`A sign-in link has been sent to ${email}. Check your inbox.`);
                 })
                 .catch((error) => {
-                    console.error("Error during sign in: ", error);
-                    alert(`Sign-in failed: ${error.message}`);
+                    console.error("Error sending sign-in link: ", error);
+                    alert(`Error: ${error.message}`);
                 });
         };
+
+        // Function to handle email sign-in link if the user clicks it
+        function handleSignInWithEmailLink() {
+            if (isSignInWithEmailLink(auth, window.location.href)) {
+                let email = window.localStorage.getItem('emailForSignIn');
+                if (!email) {
+                    // If the user is returning from the link and email is missing
+                    email = prompt('Please provide your email for confirmation');
+                }
+
+                // Sign the user in with the email link
+                signInWithEmailLink(auth, email, window.location.href)
+                    .then((result) => {
+                        alert(`Welcome, ${email}!`);
+                        window.localStorage.removeItem('emailForSignIn');
+                        loadFiles(email); // Load files for the signed-in user
+                    })
+                    .catch((error) => {
+                        console.error("Error signing in with email link: ", error);
+                        alert(`Sign-in failed: ${error.message}`);
+                    });
+            }
+        }
 
         // Function to load files accessible to the user
         function loadFiles(email) {
@@ -64,13 +95,10 @@
             const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
 
             if (accessibleFiles.length > 0) {
-                // Automatically open the first file link
                 window.open(accessibleFiles[0].url, "_blank");
 
-                // Clear previous file list
-                fileList.innerHTML = '';
+                fileList.innerHTML = ''; // Clear previous file list
 
-                // Display the file links
                 accessibleFiles.forEach((file) => {
                     const listItem = document.createElement("li");
                     listItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
@@ -81,12 +109,10 @@
             }
         }
 
-        // Check authentication state
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                loadFiles(user.email); // Load files if user is already signed in
-            }
-        });
+        // Automatically handle the email sign-in link if opened
+        window.onload = () => {
+            handleSignInWithEmailLink();
+        };
     </script>
     <style>
         body {
@@ -123,10 +149,9 @@
     </style>
 </head>
 <body>
-    <h2>ConnexWebinar File Access</h2>
+    <h2>ConnexWebinar Passwordless Sign-in</h2>
     <input type="email" id="email" placeholder="Enter your email" required />
-    <input type="password" id="password" placeholder="Enter your password" required />
-    <button id="emailSignInBtn" onclick="signInWithEmail()">Sign in with Email</button>
+    <button id="emailSignInBtn" onclick="sendSignInLink()">Send Sign-in Link</button>
     
     <h2>Accessible Files:</h2>
     <ul id="fileList"></ul>
