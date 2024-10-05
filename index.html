@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConnexWebinar Passwordless Sign-in</title>
+    <title>ConnexWebinar File Access</title>
     <script type="module">
-        // Import Firebase SDK components
+        // Import the necessary functions from Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
-        // Firebase configuration
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA-e4hO_m_AoHPxDz8T3maBU41njDqABWY",
             authDomain: "connexwebinar.firebaseapp.com",
@@ -24,81 +24,53 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const storage = getStorage(app);
         const fileList = document.getElementById("fileList");
 
-        // Action code settings (URL to redirect to after email sign-in)
-        const actionCodeSettings = {
-            url: 'http://localhost:3000', // Replace this with your actual redirect URL
-            handleCodeInApp: true
-        };
-
-        // Function to send sign-in link to email
-        window.sendSignInLink = () => {
-            const email = document.getElementById("email").value;
-            if (!email) {
-                alert("Please enter your email.");
-                return;
-            }
-
-            // Send the sign-in link to the user's email
-            sendSignInLinkToEmail(auth, email, actionCodeSettings)
-                .then(() => {
-                    // Save the user's email locally for further use
-                    window.localStorage.setItem('emailForSignIn', email);
-                    alert(`A sign-in link has been sent to ${email}. Check your inbox.`);
+        // Function to handle Google Sign-In
+        window.signInWithGoogle = () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    console.log("User Info: ", user);
+                    alert(`Welcome, ${user.displayName}!`);
+                    loadFiles(user.email); // Load files for the signed-in user
                 })
                 .catch((error) => {
-                    console.error("Error sending sign-in link: ", error);
-                    alert(`Error: ${error.message}`);
+                    console.error("Error during sign in: ", error);
+                    alert(`Sign-in failed: ${error.message}`);
                 });
         };
 
-        // Function to handle email sign-in link if the user clicks it
-        function handleSignInWithEmailLink() {
-            if (isSignInWithEmailLink(auth, window.location.href)) {
-                let email = window.localStorage.getItem('emailForSignIn');
-                if (!email) {
-                    // If the user is returning from the link and email is missing
-                    email = prompt('Please provide your email for confirmation');
-                }
-
-                // Sign the user in with the email link
-                signInWithEmailLink(auth, email, window.location.href)
-                    .then((result) => {
-                        alert(`Welcome, ${email}!`);
-                        window.localStorage.removeItem('emailForSignIn');
-                        loadFiles(email); // Load files for the signed-in user
-                    })
-                    .catch((error) => {
-                        console.error("Error signing in with email link: ", error);
-                        alert(`Sign-in failed: ${error.message}`);
-                    });
-            }
-        }
-
         // Function to load files accessible to the user
         function loadFiles(email) {
+            // Mapping of files to authorized emails
             const authorizedFiles = [
                 {
                     name: "IMG_20230217_083212.jpg",
                     url: "https://www.connexgrow.com/",
-                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "helprbuddy24@gmail.com"]
+                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "helprbuddy24@gmail.com"] // Add more emails here
                 },
                 {
                     name: "Example File 3",
                     url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
-                    authorizedEmails: ["example2@gmail.com", "user3@example.com"]
+                    authorizedEmails: ["example2@gmail.com", "user3@example.com"] // Add more emails here
                 },
                 // Add more files as needed
             ];
 
+            // Find accessible files for the user
             const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
 
             if (accessibleFiles.length > 0) {
+                // Automatically open the first file link
                 window.open(accessibleFiles[0].url, "_blank");
 
-                fileList.innerHTML = ''; // Clear previous file list
+                // Clear previous file list
+                fileList.innerHTML = '';
 
+                // Display the file links
                 accessibleFiles.forEach((file) => {
                     const listItem = document.createElement("li");
                     listItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
@@ -109,10 +81,12 @@
             }
         }
 
-        // Automatically handle the email sign-in link if opened
-        window.onload = () => {
-            handleSignInWithEmailLink();
-        };
+        // Check authentication state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loadFiles(user.email); // Load files if user is already signed in
+            }
+        });
     </script>
     <style>
         body {
@@ -136,23 +110,13 @@
         button:hover {
             background-color: #357ae8;
         }
-        input {
-            padding: 10px;
-            margin: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
         ul {
             list-style-type: none;
         }
     </style>
 </head>
 <body>
-    <h2>ConnexWebinar Passwordless Sign-in</h2>
-    <input type="email" id="email" placeholder="Enter your email" required />
-    <button id="emailSignInBtn" onclick="sendSignInLink()">Send Sign-in Link</button>
-    
+    <button id="googleSignInBtn" onclick="signInWithGoogle()">Sign in with Google</button>
     <h2>Accessible Files:</h2>
     <ul id="fileList"></ul>
 </body>
