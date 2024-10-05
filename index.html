@@ -3,19 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Sign-In</title>
-    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js"></script>
-</head>
-<body>
-    <h1>Sign In with Email</h1>
-    
-    <!-- Input for email address -->
-    <input type="email" id="emailInput" placeholder="Enter your email" />
-    <button id="sendLinkBtn">Send Sign-In Link</button>
+    <title>ConnexWebinar File Access</title>
+    <script type="module">
+        // Import Firebase SDK components
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
-    <script>
-        // Firebase configuration (ensure you have your Firebase config here)
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyA-e4hO_m_AoHPxDz8T3maBU41njDqABWY",
             authDomain: "connexwebinar.firebaseapp.com",
@@ -27,70 +22,113 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+        const fileList = document.getElementById("fileList");
 
-        // Action Code Settings for email sign-in
-        const actionCodeSettings = {
-            url: 'https://connexgrow.github.io/firebase/finishSignUp', // Update this to your correct URL
-            handleCodeInApp: true, // Ensure link is handled in the app
-        };
+        // Function to handle email sign-in
+        window.signInWithEmail = () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
 
-        // Function to send email sign-in link
-        function sendSignInLink(email) {
-            auth.sendSignInLinkToEmail(email, actionCodeSettings)
-                .then(() => {
-                    alert('Sign-in link sent to ' + email);
-                    // Store the email locally to complete sign-in after user clicks link
-                    window.localStorage.setItem('emailForSignIn', email);
+            signInWithEmailAndPassword(auth, email, password)
+                .then((result) => {
+                    const user = result.user;
+                    console.log("User Info: ", user);
+                    alert(`Welcome, ${user.email}!`);
+                    loadFiles(user.email); // Load files for the signed-in user
                 })
                 .catch((error) => {
-                    console.error('Error sending email:', error);
-                    alert(`Error: ${error.message}`);
+                    console.error("Error during sign in: ", error);
+                    alert(`Sign-in failed: ${error.message}`);
                 });
-        }
-
-        // Function to complete sign-in once the link is clicked
-        function completeSignIn() {
-            // Get the email from localStorage
-            const email = window.localStorage.getItem('emailForSignIn');
-
-            if (auth.isSignInWithEmailLink(window.location.href)) {
-                if (!email) {
-                    // If no email in local storage, ask the user to input the email again
-                    email = window.prompt('Please provide your email for confirmation');
-                }
-
-                // Complete the sign-in with the link
-                auth.signInWithEmailLink(email, window.location.href)
-                    .then((result) => {
-                        alert('Successfully signed in!');
-                        // Clear localStorage
-                        window.localStorage.removeItem('emailForSignIn');
-                    })
-                    .catch((error) => {
-                        console.error('Error signing in:', error);
-                        alert(`Error: ${error.message}`);
-                    });
-            }
-        }
-
-        // Event listener for the "Send Sign-In Link" button
-        window.onload = function() {
-            document.getElementById('sendLinkBtn').addEventListener('click', function() {
-                const email = document.getElementById('emailInput').value;
-                if (email) {
-                    sendSignInLink(email);
-                } else {
-                    alert('Please enter a valid email address.');
-                }
-            });
-
-            // If the user is returning after clicking the link in the email
-            if (auth.isSignInWithEmailLink(window.location.href)) {
-                completeSignIn();
-            }
         };
+
+        // Function to load files accessible to the user
+        function loadFiles(email) {
+            const authorizedFiles = [
+                {
+                    name: "IMG_20230217_083212.jpg",
+                    url: "https://www.connexgrow.com/",
+                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "helprbuddy24@gmail.com"]
+                },
+                {
+                    name: "Example File 3",
+                    url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
+                    authorizedEmails: ["example2@gmail.com", "user3@example.com"]
+                },
+                // Add more files as needed
+            ];
+
+            const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
+
+            if (accessibleFiles.length > 0) {
+                // Automatically open the first file link
+                window.open(accessibleFiles[0].url, "_blank");
+
+                // Clear previous file list
+                fileList.innerHTML = '';
+
+                // Display the file links
+                accessibleFiles.forEach((file) => {
+                    const listItem = document.createElement("li");
+                    listItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
+                    fileList.appendChild(listItem);
+                });
+            } else {
+                alert("You do not have access to any files.");
+            }
+        }
+
+        // Check authentication state
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loadFiles(user.email); // Load files if user is already signed in
+            }
+        });
     </script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #357ae8;
+        }
+        input {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        ul {
+            list-style-type: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>ConnexWebinar File Access</h2>
+    <input type="email" id="email" placeholder="Enter your email" required />
+    <input type="password" id="password" placeholder="Enter your password" required />
+    <button id="emailSignInBtn" onclick="signInWithEmail()">Sign in with Email</button>
+    
+    <h2>Accessible Files:</h2>
+    <ul id="fileList"></ul>
 </body>
 </html>
