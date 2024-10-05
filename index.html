@@ -7,7 +7,7 @@
     <script type="module">
         // Import the necessary functions from Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-storage.js";
 
         // Your web app's Firebase configuration
@@ -31,17 +31,7 @@
         // Function to handle Google Sign-In
         window.signInWithGoogle = () => {
             console.log("Attempting to sign in...");
-            signInWithPopup(auth, provider)
-                .then((result) => {
-                    const user = result.user;
-                    console.log("User Info: ", user);
-                    alert(`Welcome, ${user.displayName}!`);
-                    loadFiles(user.email); // Load files for the signed-in user
-                })
-                .catch((error) => {
-                    console.error("Error during sign in: ", error);
-                    alert(`Sign-in failed: ${error.message}`);
-                });
+            signInWithRedirect(auth, provider); // Changed to redirect
         };
 
         // Function to load files accessible to the user
@@ -51,12 +41,12 @@
                 {
                     name: "IMG_20230217_083212.jpg",
                     url: "https://www.connexgrow.com/",
-                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "helprbuddy24@gmail.com"] // Add more emails here
+                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "helprbuddy24@gmail.com"]
                 },
                 {
                     name: "Example File 3",
                     url: "https://firebasestorage.googleapis.com/v0/b/connexwebinar.appspot.com/o/webinars%2Ffile3.pdf?alt=media&token=token3",
-                    authorizedEmails: ["example2@gmail.com", "user3@example.com"] // Add more emails here
+                    authorizedEmails: ["example2@gmail.com", "user3@example.com"]
                 },
                 // Add more files as needed
             ];
@@ -88,6 +78,21 @@
                 loadFiles(user.email); // Load files if user is already signed in
             }
         });
+
+        // Check for redirect result
+        getRedirectResult(auth)
+            .then((result) => {
+                if (result) {
+                    const user = result.user;
+                    console.log("User Info: ", user);
+                    alert(`Welcome, ${user.displayName}!`);
+                    loadFiles(user.email); // Load files for the signed-in user
+                }
+            })
+            .catch((error) => {
+                console.error("Error during sign in: ", error);
+                alert(`Sign-in failed: ${error.message}`);
+            });
     </script>
     <style>
         body {
