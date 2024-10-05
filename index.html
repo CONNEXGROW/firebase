@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Passwordless Email Authentication</title>
+    <title>ConnexWebinar Email Sign-In</title>
     <script type="module">
-        // Import necessary functions from the Firebase SDK
+        // Import the necessary functions from Firebase SDK
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
         import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 
@@ -24,85 +24,54 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
 
-        // Function to send sign-in link to email
-        window.sendSignInLink = () => {
-            const email = document.getElementById('email').value;
+        // Function to send sign-in link to the user's email
+        function sendSignInLink(email) {
             const actionCodeSettings = {
-                // URL you want to redirect back to after email verification
-                url: 'https://your-redirect-url.com', // Change this to your redirect URL
+                url: 'https://connexgrow.github.io/firebase/finishSignUp', // Change this as needed
                 handleCodeInApp: true,
             };
 
             sendSignInLinkToEmail(auth, email, actionCodeSettings)
                 .then(() => {
-                    // Email sent. Inform the user.
-                    alert(`Sign-in link sent to ${email}. Please check your inbox.`);
+                    alert('Sign-in link sent to ' + email + '!');
                     // Save the email locally to complete sign-in later
                     window.localStorage.setItem('emailForSignIn', email);
                 })
                 .catch((error) => {
-                    console.error("Error sending email: ", error.message);
-                    alert(`Error sending email: ${error.message}`);
+                    console.error('Error sending email:', error);
+                    alert('Error sending email: ' + error.message);
                 });
-        };
+        }
 
-        // Function to handle sign-in with email link
-        const handleSignIn = () => {
+        // Function to handle email sign-in when user clicks the link
+        function handleSignIn() {
             const email = window.localStorage.getItem('emailForSignIn');
-
             if (isSignInWithEmailLink(auth, window.location.href)) {
-                // Confirm the link is a sign-in link for the provided email
+                // If the user clicked the link, complete the sign-in process
+                const urlParams = new URLSearchParams(window.location.search);
+                const email = urlParams.get('email'); // Get email from the URL if needed
                 signInWithEmailLink(auth, email, window.location.href)
                     .then((result) => {
-                        // Successfully signed in
-                        alert(`Welcome back, ${result.user.email}!`);
-                        // Clear email from local storage
+                        alert('Successfully signed in!');
+                        // Clear the email from local storage
                         window.localStorage.removeItem('emailForSignIn');
-                        // Redirect or load your app
-                        loadFiles(result.user.email);
                     })
                     .catch((error) => {
-                        console.error("Error during sign-in: ", error.message);
-                        alert(`Sign-in failed: ${error.message}`);
+                        console.error('Error signing in:', error);
+                        alert('Error signing in: ' + error.message);
                     });
             }
-        };
+        }
 
         // Check authentication state
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                loadFiles(user.email); // Load files if user is already signed in
+                alert(`Welcome, ${user.email}!`); // User is signed in
             } else {
-                handleSignIn(); // Check for sign-in with email link
+                handleSignIn(); // Handle the sign-in link
             }
         });
 
-        // Function to load files for the signed-in user
-        function loadFiles(email) {
-            const authorizedFiles = [
-                {
-                    name: "IMG_20230217_083212.jpg",
-                    url: "https://www.connexgrow.com/",
-                    authorizedEmails: ["amanmandalbahi@gmail.com", "amanpandey2005216@gmail.com", "helprbuddy24@gmail.com"] // Add more emails here
-                },
-                // Add more files as needed
-            ];
-
-            const accessibleFiles = authorizedFiles.filter(file => file.authorizedEmails.includes(email));
-
-            if (accessibleFiles.length > 0) {
-                const fileList = document.getElementById("fileList");
-                fileList.innerHTML = ''; // Clear previous file list
-
-                accessibleFiles.forEach((file) => {
-                    const listItem = document.createElement("li");
-                    listItem.innerHTML = `<a href="${file.url}" target="_blank">${file.name}</a>`;
-                    fileList.appendChild(listItem);
-                });
-            } else {
-                alert("You do not have access to any files.");
-            }
-        }
     </script>
     <style>
         body {
@@ -115,10 +84,8 @@
         }
         input {
             padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 250px;
+            font-size: 16px;
+            margin: 10px 0;
         }
         button {
             padding: 10px 20px;
@@ -128,22 +95,22 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            margin-bottom: 20px;
         }
         button:hover {
             background-color: #357ae8;
         }
-        ul {
-            list-style-type: none;
-        }
     </style>
 </head>
 <body>
-    <h2>Passwordless Email Authentication</h2>
-    <input type="email" id="email" placeholder="Enter email" required>
-    <button onclick="sendSignInLink()">Send Sign-In Link</button>
-    
-    <h2>Accessible Files:</h2>
-    <ul id="fileList"></ul>
+    <h1>ConnexWebinar Email Sign-In</h1>
+    <input type="email" id="emailInput" placeholder="Enter your email" required>
+    <button id="sendLinkBtn">Send Sign-In Link</button>
+
+    <script>
+        document.getElementById('sendLinkBtn').addEventListener('click', () => {
+            const email = document.getElementById('emailInput').value;
+            sendSignInLink(email);
+        });
+    </script>
 </body>
 </html>
