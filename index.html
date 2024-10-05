@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ConnexWebinar Email Sign-In</title>
-    <script type="module">
-        // Import Firebase SDK
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    <title>Email Sign-In</title>
+    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth.js"></script>
+</head>
+<body>
+    <h1>Sign In with Email</h1>
+    
+    <!-- Input for email address -->
+    <input type="email" id="emailInput" placeholder="Enter your email" />
+    <button id="sendLinkBtn">Send Sign-In Link</button>
 
-        // Firebase configuration
+    <script>
+        // Firebase configuration (ensure you have your Firebase config here)
         const firebaseConfig = {
             apiKey: "AIzaSyA-e4hO_m_AoHPxDz8T3maBU41njDqABWY",
             authDomain: "connexwebinar.firebaseapp.com",
@@ -21,20 +27,21 @@
         };
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
 
-        // Function to send sign-in link
+        // Action Code Settings for email sign-in
+        const actionCodeSettings = {
+            url: 'https://connexgrow.github.io/firebase/finishSignUp', // Update this to your correct URL
+            handleCodeInApp: true, // Ensure link is handled in the app
+        };
+
+        // Function to send email sign-in link
         function sendSignInLink(email) {
-            const actionCodeSettings = {
-                url: 'https://connexgrow.github.io/firebase/finishSignUp', // Set your finish sign-up URL here
-                handleCodeInApp: true,
-            };
-
-            sendSignInLinkToEmail(auth, email, actionCodeSettings)
+            auth.sendSignInLinkToEmail(email, actionCodeSettings)
                 .then(() => {
-                    alert(`Sign-in link sent to ${email}!`);
-                    // Save email locally to finish sign-in later
+                    alert('Sign-in link sent to ' + email);
+                    // Store the email locally to complete sign-in after user clicks link
                     window.localStorage.setItem('emailForSignIn', email);
                 })
                 .catch((error) => {
@@ -43,82 +50,47 @@
                 });
         }
 
-        // Function to handle sign-in when the link is clicked
-        function handleSignIn() {
-            if (isSignInWithEmailLink(auth, window.location.href)) {
-                let email = window.localStorage.getItem('emailForSignIn');
+        // Function to complete sign-in once the link is clicked
+        function completeSignIn() {
+            // Get the email from localStorage
+            const email = window.localStorage.getItem('emailForSignIn');
+
+            if (auth.isSignInWithEmailLink(window.location.href)) {
                 if (!email) {
-                    // If no email saved in localStorage, prompt the user to enter their email
-                    email = prompt('Please enter your email for confirmation');
+                    // If no email in local storage, ask the user to input the email again
+                    email = window.prompt('Please provide your email for confirmation');
                 }
-                signInWithEmailLink(auth, email, window.location.href)
+
+                // Complete the sign-in with the link
+                auth.signInWithEmailLink(email, window.location.href)
                     .then((result) => {
                         alert('Successfully signed in!');
-                        // Clear the email from local storage
+                        // Clear localStorage
                         window.localStorage.removeItem('emailForSignIn');
                     })
                     .catch((error) => {
-                        console.error('Error during sign-in:', error);
+                        console.error('Error signing in:', error);
                         alert(`Error: ${error.message}`);
                     });
             }
         }
 
-        // Listen for auth state changes
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                alert(`Welcome back, ${user.email}!`); // User is signed in
-            } else {
-                handleSignIn(); // Try to handle sign-in with email link if present
+        // Event listener for the "Send Sign-In Link" button
+        window.onload = function() {
+            document.getElementById('sendLinkBtn').addEventListener('click', function() {
+                const email = document.getElementById('emailInput').value;
+                if (email) {
+                    sendSignInLink(email);
+                } else {
+                    alert('Please enter a valid email address.');
+                }
+            });
+
+            // If the user is returning after clicking the link in the email
+            if (auth.isSignInWithEmailLink(window.location.href)) {
+                completeSignIn();
             }
-        });
-    </script>
-
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
-        }
-
-        input, button {
-            padding: 10px;
-            font-size: 16px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        button {
-            background-color: #4285F4;
-            color: white;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #357ae8;
-        }
-    </style>
-</head>
-<body>
-    <h1>ConnexWebinar Email Sign-In</h1>
-    <input type="email" id="emailInput" placeholder="Enter your email" required>
-    <button id="sendLinkBtn">Send Sign-In Link</button>
-
-    <script>
-        // Send the sign-in link when the button is clicked
-        document.getElementById('sendLinkBtn').addEventListener('click', () => {
-            const email = document.getElementById('emailInput').value;
-            if (email) {
-                sendSignInLink(email); // Call the function to send the sign-in link
-            } else {
-                alert('Please enter a valid email address.');
-            }
-        });
+        };
     </script>
 </body>
 </html>
